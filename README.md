@@ -7,7 +7,7 @@ couldn't be updgraded to support modern libraries. I was not able to install
 the original `spdlog` library there, so I was forced to write my own. This is
 the result.
 
-## Introduction
+## 🚀 Introduction
 
 **minispdlog** is a lightweight, easy-to-integrate logging library inspired by
 *[spdlog]. It provides multiple log levels, thread safety, optional asynchronous
@@ -15,7 +15,7 @@ the result.
 *single header file, making it ideal for embedding in small projects or for
 *quick prototyping.
 
-## Features
+## 📜 Features
 
 - Header-only, no dependencies except the C++ standard library
 - Log levels: DEBUG, INFO, WARN, ERROR, CRITICAL
@@ -25,7 +25,7 @@ the result.
 - Macros for convenient logging
 - Timestamp and thread ID included in each log entry
 
-## Usage
+## 🚀 Usage
 
 ### 1. Add the header
 
@@ -70,7 +70,7 @@ To clean up resources (especially in async mode), call:
 MiniLogger::LoggerManager::shutdown();
 ```
 
-## Example
+## 🛒 Example
 
 ```cpp
 #include "minispdlog.h"
