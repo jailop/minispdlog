@@ -1,10 +1,11 @@
 # minispdlog
 
 A minimalistic, header-only, spdlog-like logger for C++14 and later. It is
-inspired by [spdlog](https://github.com/gabime/spdlog).  I wrote it because in a
-project I was working on, I needed a logger for an old Centos 7 system, which
-couldn't be updgraded to support modern libraries. I was not able to install the
-original `spdlog` library.
+inspired by [spdlog](https://github.com/gabime/spdlog).  I wrote it because in
+a project I was working on, I needed a logger for an old Centos 7 system, which
+couldn't be updgraded to support modern libraries. I was not able to install
+the original `spdlog` library there, so I was forced to write my own. This is
+the result.
 
 ## Introduction
 
