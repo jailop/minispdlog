@@ -1,3 +1,7 @@
 1.0.0 - 2025-05-23:
 
 - Initial release
+
+2.0.0 - 2025-06-15:
+
+- C99 version included, cross-platform support
