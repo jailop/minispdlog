@@ -10,7 +10,7 @@ void test_crossplatform_sync_logging() {
     printf("Testing synchronous logging...\n");
     
     // Test logging to stderr
-    logger_init(NULL, DEBUG, 0);
+    logger_init(NULL, LOG_DEBUG, 0);
     logger_info("Sync test to stderr");
     logger_debug("Debug message");
     logger_warn("Warning message");
@@ -20,8 +20,8 @@ void test_crossplatform_sync_logging() {
     
     // Test logging to file
     const char* test_file = "test_sync.log";
-    logger_init(test_file, INFO, 0);
-    logger_debug("This should not appear (below INFO level)");
+    logger_init(test_file, LOG_INFO, 0);
+    logger_debug("This should not appear (below LOG_INFO level)");
     logger_info("This should appear in file");
     logger_warn("Warning in file");
     logger_error_f("Error with number: %d", 42);
@@ -40,7 +40,7 @@ void test_crossplatform_async_logging() {
     printf("Testing asynchronous logging...\n");
     
     const char* test_file = "test_async.log";
-    logger_init(test_file, DEBUG, 1);
+    logger_init(test_file, LOG_DEBUG, 1);
     
     // Generate multiple log entries quickly
     for (int i = 0; i < 50; i++) {
@@ -69,8 +69,8 @@ void test_crossplatform_log_levels() {
     
     const char* test_file = "test_levels.log";
     
-    // Test with WARN level - should only show WARN, ERROR, CRITICAL
-    logger_init(test_file, WARN, 0);
+    // Test with LOG_WARN level - should only show LOG_WARN, LOG_ERROR, LOG_CRITICAL
+    logger_init(test_file, LOG_WARN, 0);
     logger_debug("Should not appear");
     logger_info("Should not appear");
     logger_warn("Should appear");
@@ -89,7 +89,7 @@ void test_crossplatform_log_levels() {
     }
     fclose(f);
     
-    // Should have exactly 3 lines (WARN, ERROR, CRITICAL)
+    // Should have exactly 3 lines (LOG_WARN, ERROR, CRITICAL)
     assert(line_count == 3);
     
     printf("✓ Log levels test passed\n");
@@ -99,7 +99,7 @@ void test_crossplatform_formatted_messages() {
     printf("Testing formatted messages...\n");
     
     const char* test_file = "test_formatted.log";
-    logger_init(test_file, DEBUG, 0);
+    logger_init(test_file, LOG_DEBUG, 0);
     
     logger_debug_f("Debug: %d %s %.2f", 123, "test", 3.14);
     logger_info_f("Info: %c %x", 'A', 255);
@@ -120,7 +120,7 @@ void test_crossplatform_formatted_messages() {
 void test_crossplatform_min_level_change() {
     printf("Testing minimum level changes...\n");
     
-    logger_init(NULL, DEBUG, 0);
+    logger_init(NULL, LOG_DEBUG, 0);
     
     // Test initial level
     logger_info("This should appear");
@@ -130,8 +130,8 @@ void test_crossplatform_min_level_change() {
     logger_info("This should NOT appear");
     logger_error("This should appear");
     
-    // Change back to DEBUG
-    logger_set_min_level(DEBUG);
+    // Change back to LOG_DEBUG
+    logger_set_min_level(LOG_DEBUG);
     logger_debug("This should appear again");
     
     logger_deinit();

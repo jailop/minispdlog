@@ -37,6 +37,7 @@
     #include <windows.h>
     #include <io.h>
     #include <fcntl.h>
+    #include <sys/stat.h>
     #include <sys/timeb.h>
     #include <process.h>
 #endif
@@ -62,11 +63,11 @@
 
 /* Log levels */
 typedef enum {
-    DEBUG = 0,
-    INFO,
-    WARN,
-    ERROR,
-    CRITICAL
+    LOG_DEBUG = 0,
+    LOG_INFO,
+    LOG_WARN,
+    LOG_ERROR,
+    LOG_CRITICAL
 } LogLevel;
 
 /* Cross-platform threading abstractions */
@@ -333,7 +334,7 @@ static void MINISPDLOG_UNUSED logger_init(const char* filename, LogLevel min_lev
     /* First-time initialization */
     if (!logger_initialized) {
         logger.file = LOGGER_STDERR;
-        logger.min_level = DEBUG;
+        logger.min_level = LOG_DEBUG;
         logger.async_mode = 0;
         memset(&logger.circ_buf, 0, sizeof(CircularBuffer));
         logger.writer_thread = 0;
@@ -429,11 +430,11 @@ static void MINISPDLOG_UNUSED logger_set_timestamp() {
 /* Convert log level to string */
 static inline const char* MINISPDLOG_UNUSED logger_level_to_string(LogLevel level) {
     switch (level) {
-        case DEBUG: return "DEBUG";
-        case INFO: return "INFO";
-        case WARN: return "WARN";
-        case ERROR: return "ERROR";
-        case CRITICAL: return "CRITICAL";
+        case LOG_DEBUG: return "DEBUG";
+        case LOG_INFO: return "INFO";
+        case LOG_WARN: return "WARN";
+        case LOG_ERROR: return "ERROR";
+        case LOG_CRITICAL: return "CRITICAL";
         default: return "UNKNOWN";
     }
 }
@@ -460,23 +461,23 @@ static void MINISPDLOG_UNUSED logger_write_log(LogLevel level, const char* messa
 
 /* Basic logging functions */
 static inline void MINISPDLOG_UNUSED logger_debug(const char* message) {
-    logger_write_log(DEBUG, message);
+    logger_write_log(LOG_DEBUG, message);
 }
 
 static inline void MINISPDLOG_UNUSED logger_info(const char* message) {
-    logger_write_log(INFO, message);
+    logger_write_log(LOG_INFO, message);
 }
 
 static inline void MINISPDLOG_UNUSED logger_warn(const char* message) {
-    logger_write_log(WARN, message);
+    logger_write_log(LOG_WARN, message);
 }
 
 static inline void MINISPDLOG_UNUSED logger_error(const char* message) {
-    logger_write_log(ERROR, message);
+    logger_write_log(LOG_ERROR, message);
 }
 
 static inline void MINISPDLOG_UNUSED logger_critical(const char* message) {
-    logger_write_log(CRITICAL, message);
+    logger_write_log(LOG_CRITICAL, message);
 }
 
 static void MINISPDLOG_UNUSED logger_write_log_va(LogLevel level, const char* format, va_list args) {
@@ -498,35 +499,35 @@ static void MINISPDLOG_UNUSED logger_write_log_f(LogLevel level, const char* for
 static inline void MINISPDLOG_UNUSED logger_debug_f(const char* format, ...) {
     va_list args;
     va_start(args, format);
-    logger_write_log_va(DEBUG, format, args);
+    logger_write_log_va(LOG_DEBUG, format, args);
     va_end(args);
 }
 
 static inline void MINISPDLOG_UNUSED logger_info_f(const char* format, ...) {
     va_list args;
     va_start(args, format);
-    logger_write_log_va(INFO, format, args);
+    logger_write_log_va(LOG_INFO, format, args);
     va_end(args);
 }
 
 static inline void MINISPDLOG_UNUSED logger_warn_f(const char* format, ...) {
     va_list args;
     va_start(args, format);
-    logger_write_log_va(WARN, format, args);
+    logger_write_log_va(LOG_WARN, format, args);
     va_end(args);
 }
 
 static inline void MINISPDLOG_UNUSED logger_error_f(const char* format, ...) {
     va_list args;
     va_start(args, format);
-    logger_write_log_va(ERROR, format, args);
+    logger_write_log_va(LOG_ERROR, format, args);
     va_end(args);
 }
 
 static inline void MINISPDLOG_UNUSED logger_critical_f(const char* format, ...) {
     va_list args;
     va_start(args, format);
-    logger_write_log_va(CRITICAL, format, args);
+    logger_write_log_va(LOG_CRITICAL, format, args);
     va_end(args);
 }
 
