@@ -22,8 +22,7 @@ appropriate API usage.
 - **Header-only**: Single file inclusion with no external dependencies beyond
   system APIs
 - **C99 Compatible**: Works with C99 standard and later
-- **Cross-platform**: Supports Windows and POSIX systems with automatic
-  platform detection
+- **Cross-platform**: Supports Windows and POSIX systems
 - **Log levels**: DEBUG, INFO, WARN, ERROR, CRITICAL
 - **Thread-safe**: Uses platform-appropriate threading primitives
 - **Asynchronous logging**: Optional async mode with circular buffer
@@ -116,34 +115,9 @@ int main() {
 }
 ```
 
-## 📝 Log Output Format
-
-Each log entry includes timestamp with microsecond precision and log level:
-
-```
-2025-06-03 14:23:45.123456 [INFO] Application started
-2025-06-03 14:23:45.123467 [DEBUG] Debug value: 42
-2025-06-03 14:23:45.123478 [WARN] This is a warning
-2025-06-03 14:23:45.123489 [ERROR] Failed to process file: data.txt
-2025-06-03 14:23:45.123501 [CRITICAL] Critical system failure!
-```
-
 ## 🏗️ Building examples and tests
 
-### POSIX Systems (Linux, macOS, Unix-like):
-
-```bash
-gcc -std=c99 -pthread -o example example.c
-```
-
-### Windows (MinGW/MSYS2):
-
-```bash
-gcc -std=c99 -o example.exe example.c
-# Note: Windows version doesn't need -pthread
-```
-
-### Using provided Makefile:
+Use the provided Makefile:
 
 ```bash
 make example  # Build example
@@ -151,12 +125,6 @@ make test     # Build test suite
 make all      # Build both
 make clean    # Clean build artifacts
 make test-all # Run tests
-```
-
-### Compiler flags:
-
-```bash
-CFLAGS = -Wall -g -std=c99 -pedantic -pthread
 ```
 
 ## ⚙️ Configuration
@@ -171,85 +139,32 @@ CFLAGS = -Wall -g -std=c99 -pedantic -pthread
 
 ### Async vs Sync Mode
 
-- **Synchronous (async_mode = 0)**: Direct writes to file/stderr, slower but simpler
-- **Asynchronous (async_mode = 1)**: Background thread with circular buffer, faster for high-frequency logging
-
-### Buffer Configuration
-
-The library uses compile-time constants that can be modified in the header:
-
-```c
-#define BUFFER_SIZE 8192      // Circular buffer size for async mode
-#define MAX_LOG_ENTRY 1024    // Maximum size per log entry
-```
+- **Synchronous (async_mode = 0)**: Direct writes to file/stderr
+- **Asynchronous (async_mode = 1)**: Background thread with circular buffer
 
 ## 🧪 Testing
 
-Run the included test suite:
+Run the included test suite using the Makefile:
 
-```bash
-make test
-./test
-```
-
-Or run tests directly:
 ```bash
 make test-all
 ```
 
-The test suite covers:
-- Synchronous and asynchronous logging
-- Log level filtering
-- Formatted message logging
-- Dynamic level changes
-- File creation and content verification
-
-## 🔒 Thread Safety
-
-The library is thread-safe and uses platform-appropriate threading primitives:
-
-- **Windows**: Critical sections and condition variables
-- **POSIX**: Mutexes and condition variables
-
-Thread safety protects:
-
-- Circular buffer operations in async mode
-- File write operations in sync mode
-- Coordination between producer and consumer threads
-
 ## 📋 API Reference
 
-### Initialization Functions
-
-```c
-void logger_init(const char* filename, LogLevel min_level, int async_mode);
-void logger_deinit(void);
-void logger_set_min_level(LogLevel level);
-```
-
-### Basic Logging Functions
-
-```c
-void logger_debug(const char* message);
-void logger_info(const char* message);
-void logger_warn(const char* message);
-void logger_error(const char* message);
-void logger_critical(const char* message);
-```
-
-### Formatted Logging Functions
-
-```c
-void logger_debug_f(const char* format, ...);
-void logger_info_f(const char* format, ...);
-void logger_warn_f(const char* format, ...);
-void logger_error_f(const char* format, ...);
-void logger_critical_f(const char* format, ...);
-```
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit issues or pull requests.
+- `void logger_init(const char* filename, LogLevel min_level, int async_mode);`
+- `void logger_deinit(void);`
+- `void logger_set_min_level(LogLevel level);`
+- `void logger_debug(const char* message);`
+- `void logger_info(const char* message);`
+- `void logger_warn(const char* message);`
+- `void logger_error(const char* message);`
+- `void logger_critical(const char* message);`
+- `void logger_debug_f(const char* format, ...);`
+- `void logger_info_f(const char* format, ...);`
+- `void logger_warn_f(const char* format, ...);`
+- `void logger_error_f(const char* format, ...);`
+- `void logger_critical_f(const char* format, ...);`
 
 ## 📄 License
 
@@ -259,7 +174,3 @@ MIT License - see the header file for full license text.
 
 - [Original C++ minispdlog](../): The C++ version of this library
 - [spdlog](https://github.com/gabime/spdlog): The inspiration for this library
-
----
-
-*© 2025 Jaime Lopez - A lightweight logging solution for C99 projects*
