@@ -1,0 +1,29 @@
+@PACKAGE_INIT@
+
+# minispdlog CMake configuration file
+
+include("${CMAKE_CURRENT_LIST_DIR}/minispdlogTargets.cmake")
+
+# Check if required components are available
+check_required_components(minispdlog)
+
+# Set variables for compatibility
+set(minispdlog_FOUND TRUE)
+set(minispdlog_VERSION @PROJECT_VERSION@)
+
+# Platform-specific configuration
+if(WIN32)
+    # Windows-specific settings
+    set(minispdlog_PLATFORM "Windows")
+elseif(UNIX)
+    # POSIX-specific settings
+    set(minispdlog_PLATFORM "POSIX")
+    # Ensure pthread is available
+    find_package(Threads REQUIRED)
+endif()
+
+# Provide usage information
+if(NOT TARGET minispdlog::minispdlog)
+    message(STATUS "minispdlog found: version ${minispdlog_VERSION} (${minispdlog_PLATFORM})")
+    message(STATUS "Usage: target_link_libraries(your_target minispdlog::minispdlog)")
+endif()
