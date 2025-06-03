@@ -1,3 +1,7 @@
+/**
+ * Example usage of the minispdlog library.
+ */
+
 #include <stdio.h>
 #include "minispdlog.h"
 

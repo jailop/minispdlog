@@ -1,18 +1,29 @@
 # minispdlog (C99)
 
-A minimalistic, header-only, spdlog-like logging library for C99 and later. This is the C99 port of the original C++ minispdlog library, designed to provide efficient logging capabilities for C projects that require C99 compatibility.
+A minimalistic, header-only, spdlog-like logging library for C99 and later.
+This is the C99 port of the original C++ minispdlog library, designed to
+provide efficient logging capabilities for C projects that require C99
+compatibility.
 
 ## 🚀 Introduction
 
-**minispdlog** is a lightweight, easy-to-integrate logging library inspired by [spdlog](https://github.com/gabime/spdlog). It provides multiple log levels, thread safety, optional asynchronous logging using a circular buffer, and printf-style formatted messages. The library is implemented in a single header file, making it ideal for embedding in C projects.
+**minispdlog** is a lightweight, easy-to-integrate logging library inspired by
+[spdlog](https://github.com/gabime/spdlog). It provides multiple log levels,
+thread safety, optional asynchronous logging using a circular buffer, and
+printf-style formatted messages. The library is implemented in a single header
+file, making it ideal for embedding in C projects.
 
-**Cross-Platform Support**: This library supports both Windows and POSIX systems (Linux, macOS, Unix-like systems) with automatic platform detection and appropriate API usage.
+**Cross-Platform Support**: This library supports both Windows and POSIX
+systems (Linux, macOS, Unix-like systems) with automatic platform detection and
+appropriate API usage.
 
 ## 📜 Features
 
-- **Header-only**: Single file inclusion with no external dependencies beyond system APIs
+- **Header-only**: Single file inclusion with no external dependencies beyond
+  system APIs
 - **C99 Compatible**: Works with C99 standard and later
-- **Cross-platform**: Supports Windows and POSIX systems with automatic platform detection
+- **Cross-platform**: Supports Windows and POSIX systems with automatic
+  platform detection
 - **Log levels**: DEBUG, INFO, WARN, ERROR, CRITICAL
 - **Thread-safe**: Uses platform-appropriate threading primitives
 - **Asynchronous logging**: Optional async mode with circular buffer
@@ -23,7 +34,7 @@ A minimalistic, header-only, spdlog-like logging library for C99 and later. This
 ## 🛠️ Requirements
 
 - C99 compatible compiler (GCC, Clang, MSVC, etc.)
-- Windows (Win32 API) OR POSIX-compliant system (Linux, macOS, Unix-like)
+- Windows (Win32 API) or POSIX-compliant system (Linux, macOS, Unix-like)
 - pthread library (POSIX systems only - automatically linked)
 
 ## 🚀 Usage
@@ -36,13 +47,10 @@ A minimalistic, header-only, spdlog-like logging library for C99 and later. This
 
 ### 2. Initialize the logger
 
-Before logging, initialize the logger with a filename (or NULL for stderr), minimum log level, and async mode:
+Before logging, initialize the logger with a filename (or NULL for stderr),
+minimum log level, and async mode (0 for synchronous, 1 for asynchronous):
 
 ```c
-// Log to stderr synchronously
-logger_init(NULL, DEBUG, 0);
-
-// Log to file asynchronously
 logger_init("mylog.txt", INFO, 1);
 ```
 
@@ -71,12 +79,12 @@ logger_critical_f("System overload: %d processes running", proc_count);
 You can change the minimum log level at runtime:
 
 ```c
-logger_set_min_level(WARN);  // Only WARN, ERROR, and CRITICAL will be logged
+logger_set_min_level(WARN);
 ```
 
 ### 5. Cleanup (important for async mode)
 
-Always call cleanup, especially when using async mode:
+Always call deinit, especially when using async mode:
 
 ```c
 logger_deinit();
@@ -120,7 +128,7 @@ Each log entry includes timestamp with microsecond precision and log level:
 2025-06-03 14:23:45.123501 [CRITICAL] Critical system failure!
 ```
 
-## 🏗️ Building
+## 🏗️ Building examples and tests
 
 ### POSIX Systems (Linux, macOS, Unix-like):
 
@@ -199,10 +207,12 @@ The test suite covers:
 ## 🔒 Thread Safety
 
 The library is thread-safe and uses platform-appropriate threading primitives:
+
 - **Windows**: Critical sections and condition variables
 - **POSIX**: Mutexes and condition variables
 
 Thread safety protects:
+
 - Circular buffer operations in async mode
 - File write operations in sync mode
 - Coordination between producer and consumer threads
