@@ -49,9 +49,9 @@
 #endif
 
 /* Constants */
-#define LOGGER_STDERR 2
-#define BUFFER_SIZE 8192
-#define MAX_LOG_ENTRY 1024
+#define _LOGGER_STDERR 2
+#define _LOGGER_BUFFER_SIZE 8192
+#define _LOGGER_MAX_LOG_ENTRY 1024
 
 /* Cross-platform attribute handling */
 #ifdef _MSC_VER
@@ -100,21 +100,21 @@ typedef enum {
 
 /* Circular buffer structure */
 typedef struct {
-    char buffer[BUFFER_SIZE];
+    char buffer[_LOGGER_BUFFER_SIZE];
     int head;
     int tail;
     int count;
     logger_mutex_t mutex;
     logger_cond_t cond;
     int running;
-} CircularBuffer;
+} LoggerCircularBuffer;
 
 /* Logger structure */
 typedef struct {
     int file;
     LogLevel min_level;
     int async_mode;
-    CircularBuffer circ_buf;
+    LoggerCircularBuffer circ_buf;
     logger_thread_t writer_thread;
 } Logger;
 
@@ -270,7 +270,7 @@ static char logger_timestamp[128];
 /* Thread function for asynchronous logging */
 static LOGGER_THREAD_RETURN MINISPDLOG_UNUSED writer_thread_func(void* arg) {
     Logger* log = (Logger*)arg;
-    char temp_buffer[MAX_LOG_ENTRY];
+    char temp_buffer[_LOGGER_MAX_LOG_ENTRY];
     
     while (log->circ_buf.running) {
         logger_mutex_lock(&log->circ_buf.mutex);
@@ -286,9 +286,9 @@ static LOGGER_THREAD_RETURN MINISPDLOG_UNUSED writer_thread_func(void* arg) {
         
         /* Extract data from circular buffer */
         int bytes_to_write = 0;
-        while (log->circ_buf.count > 0 && bytes_to_write < MAX_LOG_ENTRY - 1) {
+        while (log->circ_buf.count > 0 && bytes_to_write < _LOGGER_MAX_LOG_ENTRY - 1) {
             temp_buffer[bytes_to_write++] = log->circ_buf.buffer[log->circ_buf.tail];
-            log->circ_buf.tail = (log->circ_buf.tail + 1) % BUFFER_SIZE;
+            log->circ_buf.tail = (log->circ_buf.tail + 1) % _LOGGER_BUFFER_SIZE;
             log->circ_buf.count--;
             
             if (temp_buffer[bytes_to_write - 1] == '\n') break;
@@ -309,13 +309,13 @@ static LOGGER_THREAD_RETURN MINISPDLOG_UNUSED writer_thread_func(void* arg) {
 }
 
 /* Write data to circular buffer */
-static int MINISPDLOG_UNUSED buffer_write(CircularBuffer* buf, const char* data, int len) {
+static int MINISPDLOG_UNUSED buffer_write(LoggerCircularBuffer* buf, const char* data, int len) {
     logger_mutex_lock(&buf->mutex);
     
     int written = 0;
-    for (int i = 0; i < len && buf->count < BUFFER_SIZE; i++) {
+    for (int i = 0; i < len && buf->count < _LOGGER_BUFFER_SIZE; i++) {
         buf->buffer[buf->head] = data[i];
-        buf->head = (buf->head + 1) % BUFFER_SIZE;
+        buf->head = (buf->head + 1) % _LOGGER_BUFFER_SIZE;
         buf->count++;
         written++;
     }
@@ -332,27 +332,27 @@ static int MINISPDLOG_UNUSED buffer_write(CircularBuffer* buf, const char* data,
 static void MINISPDLOG_UNUSED logger_init(const char* filename, LogLevel min_level, int async_mode) {
     /* First-time initialization */
     if (!logger_initialized) {
-        logger.file = LOGGER_STDERR;
+        logger.file = _LOGGER_STDERR;
         logger.min_level = DEBUG;
         logger.async_mode = 0;
-        memset(&logger.circ_buf, 0, sizeof(CircularBuffer));
+        memset(&logger.circ_buf, 0, sizeof(LoggerCircularBuffer));
         logger.writer_thread = 0;
         logger_initialized = 1;
     }
     
     /* Close existing file if open */
-    if (logger.file > LOGGER_STDERR) {
+    if (logger.file > _LOGGER_STDERR) {
         logger_file_close(logger.file);
     }
     
     /* Open new file or use stderr */
     if (filename == NULL) {
-        logger.file = LOGGER_STDERR;
+        logger.file = _LOGGER_STDERR;
     } else {
         logger.file = logger_file_open(filename);
         if (logger.file == -1) {
             perror("Failed to open log file");
-            logger.file = LOGGER_STDERR;
+            logger.file = _LOGGER_STDERR;
         }
     }
     
@@ -395,9 +395,9 @@ static void MINISPDLOG_UNUSED logger_deinit() {
     }
     
     /* Close file if not stderr */
-    if (logger.file > LOGGER_STDERR) {
+    if (logger.file > _LOGGER_STDERR) {
         logger_file_close(logger.file);
-        logger.file = LOGGER_STDERR;
+        logger.file = _LOGGER_STDERR;
     }
 }
 
@@ -445,11 +445,11 @@ static void MINISPDLOG_UNUSED logger_write_log(LogLevel level, const char* messa
     }
     
     logger_set_timestamp();
-    char log_entry[MAX_LOG_ENTRY];
+    char log_entry[_LOGGER_MAX_LOG_ENTRY];
     int len = snprintf(log_entry, sizeof(log_entry), "%s [%s] %s\n", 
                       logger_timestamp, logger_level_to_string(level), message);
     
-    if (len > 0 && len < MAX_LOG_ENTRY) {
+    if (len > 0 && len < _LOGGER_MAX_LOG_ENTRY) {
         if (logger.async_mode) {
             buffer_write(&logger.circ_buf, log_entry, len);
         } else {
@@ -483,7 +483,7 @@ static void MINISPDLOG_UNUSED logger_write_log_va(LogLevel level, const char* fo
     if (level < logger.min_level) {
         return;
     }
-    char message[MAX_LOG_ENTRY];
+    char message[_LOGGER_MAX_LOG_ENTRY];
     vsnprintf(message, sizeof(message), format, args);
     logger_write_log(level, message);
 }
