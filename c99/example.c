@@ -9,7 +9,7 @@ int main() {
     printf("minispdlog Example\n");
     printf("==================\n");
 
-    logger_init("example.log", DEBUG, 1);
+    logger_init("example.log", LOG_DEBUG, 1);
 
     printf("\nLogging messages...\n");
     logger_info("Application started");
@@ -19,11 +19,11 @@ int main() {
     logger_critical("Critical system failure!");
 
     printf("Changing log level to ERROR...\n");
-    logger_set_min_level(ERROR);
+    logger_set_min_level(LOG_ERROR);
     logger_info("This won't appear in log");  // Below ERROR level
     logger_error("This will appear in log");
 
-    logger_set_min_level(DEBUG);
+    logger_set_min_level(LOG_DEBUG);
     logger_info("Log level reset to DEBUG");
 
     logger_info_f("User %s has %d points, accuracy: %.2f%%", "alice", 1250, 98.5);
