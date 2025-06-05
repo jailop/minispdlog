@@ -126,7 +126,7 @@ void test_crossplatform_min_level_change() {
     logger_info("This should appear");
     
     // Change to ERROR level
-    logger_set_min_level(ERROR);
+    logger_set_min_level(LOG_ERROR);
     logger_info("This should NOT appear");
     logger_error("This should appear");
     

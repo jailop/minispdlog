@@ -334,7 +334,7 @@ static void MINISPDLOG_UNUSED logger_init(const char* filename, LogLevel min_lev
     /* First-time initialization */
     if (!logger_initialized) {
         logger.file = _LOGGER_STDERR;
-        logger.min_level = DEBUG;
+        logger.min_level = LOG_DEBUG;
         logger.async_mode = 0;
         memset(&logger.circ_buf, 0, sizeof(LoggerCircularBuffer));
         logger.writer_thread = 0;
