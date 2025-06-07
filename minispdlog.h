@@ -28,6 +28,13 @@
 
 namespace MiniLogger {
 
+// Configuration constants - centralized for easy maintenance
+namespace Config {
+    static const int THREAD_ID_MODULO = 10000;
+    static const int TIMESTAMP_PRECISION = 6;
+    static const char* TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S";
+}
+
 enum class LogLevel {
     DEBUG = 0,
     INFO,
@@ -47,10 +54,7 @@ class Logger {
                     LogLevel min_level = LogLevel::DEBUG,
                     bool async_mode = false)
         : min_level_(min_level), async_mode_(async_mode), stop_thread_(false) {
-        log_file_.open(filename, std::ios::app);
-        if (!log_file_) {
-            throw std::runtime_error("Failed to open log file");
-        }
+        initialize_log_file(filename);
         if (async_mode_) {
             worker_thread_ = std::thread(&Logger::worker_function, this);
         }
@@ -182,8 +186,8 @@ class Logger {
                       now.time_since_epoch()) %
                   1000000;
         std::stringstream ss;
-        ss << std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S") << '.'
-           << std::setfill('0') << std::setw(6) << us.count();
+        ss << std::put_time(std::localtime(&time), Config::TIMESTAMP_FORMAT) << '.'
+           << std::setfill('0') << std::setw(Config::TIMESTAMP_PRECISION) << us.count();
         return ss.str();
     }
 
@@ -211,6 +215,25 @@ class Logger {
     }
 
     /**
+     * Get the current thread ID
+     * This helper function extracts thread ID calculation logic
+     */
+    inline std::string get_thread_id() {
+        return std::to_string(
+            std::hash<std::thread::id>{}(std::this_thread::get_id()) %
+            Config::THREAD_ID_MODULO);
+    }
+
+    /**
+     * Format a complete log entry with timestamp, level, thread ID, and message
+     * This centralizes the log entry formatting logic to reduce duplication
+     */
+    std::string format_log_entry(LogLevel level, const std::string &message) {
+        return get_timestamp() + " [" + level_to_string(level) + "] [Thread:" +
+               get_thread_id() + "] " + message;
+    }
+
+    /**
      * Write the log message to the file
      * This method is used to write the log message to the file. It formats the
      * message with a timestamp and thread ID.
@@ -219,12 +242,7 @@ class Logger {
         if (level < min_level_)
             return;
 
-        std::string log_message =
-            get_timestamp() + " [" + level_to_string(level) + "] [Thread:" +
-            std::to_string(
-                std::hash<std::thread::id>{}(std::this_thread::get_id()) %
-                10000) +
-            "] " + message;
+        std::string log_message = format_log_entry(level, message);
 
         if (async_mode_) {
             std::lock_guard<std::mutex> lock(queue_mutex_);
@@ -233,6 +251,17 @@ class Logger {
         } else {
             std::lock_guard<std::mutex> file_lock(mutex_);
             log_file_ << log_message << std::endl << std::flush;
+        }
+    }
+
+    /**
+     * Initialize the log file
+     * This helper function centralizes file initialization logic
+     */
+    void initialize_log_file(const std::string &filename) {
+        log_file_.open(filename, std::ios::app);
+        if (!log_file_.is_open()) {
+            throw std::runtime_error("Unable to open log file: " + filename);
         }
     }
 
@@ -278,7 +307,7 @@ class LoggerManager {
                            bool async_mode = false) {
         auto &inst = get_instance();
         std::lock_guard<std::mutex> lock(inst.mutex);
-        inst.logger = std::make_unique<Logger>(filename, min_level, async_mode);
+        inst.logger = create_logger(filename, min_level, async_mode);
         inst.initialized = true;
     }
 
@@ -289,10 +318,7 @@ class LoggerManager {
      */
     static Logger &get() {
         auto &inst = get_instance();
-        if (!inst.initialized || !inst.logger) {
-            throw std::runtime_error(
-                "Logger not initialized. Call initialize() first.");
-        }
+        validate_logger_initialized(inst);
         return *inst.logger;
     }
 
@@ -327,6 +353,33 @@ class LoggerManager {
     };
 
     /**
+     * Helper function to create a logger instance
+     * Centralizes logger creation logic for better maintainability
+     * @param filename The log file path
+     * @param min_level Minimum log level to record
+     * @param async_mode Whether to use asynchronous logging
+     * @return Unique pointer to the created Logger instance
+     */
+    static std::unique_ptr<Logger> create_logger(const std::string &filename,
+                                                LogLevel min_level,
+                                                bool async_mode) {
+        return std::unique_ptr<Logger>(new Logger(filename, min_level, async_mode));
+    }
+
+    /**
+     * Helper function to validate logger initialization
+     * Provides consistent error handling across methods
+     * @param inst Reference to the LoggerInstance to validate
+     * @throws std::runtime_error if logger is not initialized
+     */
+    static void validate_logger_initialized(const LoggerInstance &inst) {
+        if (!inst.initialized || !inst.logger) {
+            throw std::runtime_error(
+                "Logger not initialized. Call initialize() first.");
+        }
+    }
+
+    /**
      * Private constructor to prevent instantiation
      * This ensures that the LoggerManager is a singleton.
      */
@@ -340,7 +393,6 @@ class LoggerManager {
 
 /**
  * Macros for convenience
- *
  * These macros are used to log messages at different levels.
  * They are defined to call the corresponding methods in the Logger class.
  */
@@ -352,27 +404,16 @@ class LoggerManager {
 
 /**
  * Macros for formatted logging
- *
  * These macros are used to log formatted messages at different levels.
- * They are defined to call the corresponding methods in the Logger class.
  * The format string should contain "{}" placeholders for the arguments.
  *
- * Example:
- *
- * SLOG_DEBUG_F("Hello, {}!", "World");
- *
- * This will log: "2025-01-01 12:00:00.000000 [DEBUG] [Thread:1234] Hello,
- * World!"
+ * Example: SLOG_DEBUG_F("Hello, {}!", "World");
+ * Output: "2025-01-01 12:00:00.000000 [DEBUG] [Thread:1234] Hello, World!"
  */
-#define SLOG_DEBUG_F(fmt, ...)                                                 \
-    MiniLogger::LoggerManager::get().debug(fmt, __VA_ARGS__)
-#define SLOG_INFO_F(fmt, ...)                                                  \
-    MiniLogger::LoggerManager::get().info(fmt, __VA_ARGS__)
-#define SLOG_WARN_F(fmt, ...)                                                  \
-    MiniLogger::LoggerManager::get().warn(fmt, __VA_ARGS__)
-#define SLOG_ERROR_F(fmt, ...)                                                 \
-    MiniLogger::LoggerManager::get().error(fmt, __VA_ARGS__)
-#define SLOG_CRITICAL_F(fmt, ...)                                              \
-    MiniLogger::LoggerManager::get().critical(fmt, __VA_ARGS__)
+#define SLOG_DEBUG_F(fmt, ...) MiniLogger::LoggerManager::get().debug(fmt, __VA_ARGS__)
+#define SLOG_INFO_F(fmt, ...) MiniLogger::LoggerManager::get().info(fmt, __VA_ARGS__)
+#define SLOG_WARN_F(fmt, ...) MiniLogger::LoggerManager::get().warn(fmt, __VA_ARGS__)
+#define SLOG_ERROR_F(fmt, ...) MiniLogger::LoggerManager::get().error(fmt, __VA_ARGS__)
+#define SLOG_CRITICAL_F(fmt, ...) MiniLogger::LoggerManager::get().critical(fmt, __VA_ARGS__)
 
 #endif // _MINISDPLOG_H

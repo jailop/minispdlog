@@ -4,9 +4,10 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <time.h>
+#include <pthread.h>
 #include "minispdlog.h"
 
-void test_crossplatform_sync_logging() {
+void test_crossplatform_sync_logging(void) {
     printf("Testing synchronous logging...\n");
     
     // Test logging to stderr
@@ -36,7 +37,7 @@ void test_crossplatform_sync_logging() {
     printf("✓ Synchronous logging test passed\n");
 }
 
-void test_crossplatform_async_logging() {
+void test_crossplatform_async_logging(void) {
     printf("Testing asynchronous logging...\n");
     
     const char* test_file = "test_async.log";
@@ -64,7 +65,7 @@ void test_crossplatform_async_logging() {
     printf("✓ Asynchronous logging test passed\n");
 }
 
-void test_crossplatform_log_levels() {
+void test_crossplatform_log_levels(void) {
     printf("Testing log levels...\n");
     
     const char* test_file = "test_levels.log";
@@ -95,7 +96,7 @@ void test_crossplatform_log_levels() {
     printf("✓ Log levels test passed\n");
 }
 
-void test_crossplatform_formatted_messages() {
+void test_crossplatform_formatted_messages(void) {
     printf("Testing formatted messages...\n");
     
     const char* test_file = "test_formatted.log";
@@ -117,7 +118,7 @@ void test_crossplatform_formatted_messages() {
     printf("✓ Formatted messages test passed\n");
 }
 
-void test_crossplatform_min_level_change() {
+void test_crossplatform_min_level_change(void) {
     printf("Testing minimum level changes...\n");
     
     logger_init(NULL, LOG_DEBUG, 0);
@@ -139,14 +140,129 @@ void test_crossplatform_min_level_change() {
     printf("✓ Minimum level change test passed\n");
 }
 
-void cleanup_test_files() {
+typedef struct {
+    int thread_id;
+    int num_messages;
+} thread_data_t;
+
+void* thread_logging_func(void* arg) {
+    thread_data_t* data = (thread_data_t*)arg;
+    
+    for (int i = 0; i < data->num_messages; i++) {
+        logger_info_f("Thread %d - Message %d", data->thread_id, i);
+        logger_warn_f("Thread %d - Warning %d", data->thread_id, i);
+        if (i % 5 == 0) {
+            logger_error_f("Thread %d - Error at iteration %d", data->thread_id, i);
+        }
+        
+        struct timespec ts = {0, 1000000}; /* 1ms */
+        nanosleep(&ts, NULL);
+    }
+    
+    return NULL;
+}
+
+void test_multithreaded_sync_logging(void) {
+    printf("Testing multi-threaded synchronous logging...\n");
+    
+    const char* test_file = "test_multithreaded_sync.log";
+    const int num_threads = 5;
+    const int messages_per_thread = 10;
+    
+    logger_init(test_file, LOG_DEBUG, 0);
+    
+    pthread_t threads[num_threads];
+    thread_data_t thread_data[num_threads];
+    
+    // Create threads
+    for (int i = 0; i < num_threads; i++) {
+        thread_data[i].thread_id = i;
+        thread_data[i].num_messages = messages_per_thread;
+        
+        int result = pthread_create(&threads[i], NULL, thread_logging_func, &thread_data[i]);
+        assert(result == 0);
+    }
+    
+    // Wait for all threads to complete
+    for (int i = 0; i < num_threads; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    
+    logger_deinit();
+    
+    // Check if file was created and has expected content
+    struct stat st;
+    assert(stat(test_file, &st) == 0);
+    assert(st.st_size > 0);
+    
+    // Count lines in the file
+    FILE* f = fopen(test_file, "r");
+    assert(f != NULL);
+    
+    char line[512];
+    int line_count = 0;
+    while (fgets(line, sizeof(line), f)) {
+        line_count++;
+    }
+    fclose(f);
+    
+    // Each thread writes: messages_per_thread info + messages_per_thread warn + 2 error (at i=0 and i=5)
+    int expected_lines = num_threads * (messages_per_thread * 2 + 2);
+    assert(line_count == expected_lines);
+    
+    printf("✓ Multi-threaded synchronous logging test passed\n");
+}
+
+void test_multithreaded_async_logging(void) {
+    printf("Testing multi-threaded asynchronous logging...\n");
+    
+    const char* test_file = "test_multithreaded_async.log";
+    const int num_threads = 5;
+    const int messages_per_thread = 10;
+    
+    logger_init(test_file, LOG_DEBUG, 1);
+    
+    pthread_t threads[num_threads];
+    thread_data_t thread_data[num_threads];
+    
+    // Create threads for async test
+    for (int i = 0; i < num_threads; i++) {
+        thread_data[i].thread_id = i + 100; // Different IDs to distinguish from sync test
+        thread_data[i].num_messages = messages_per_thread;
+        
+        int result = pthread_create(&threads[i], NULL, thread_logging_func, &thread_data[i]);
+        assert(result == 0);
+    }
+    
+    // Wait for all threads to complete
+    for (int i = 0; i < num_threads; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    
+    // Give time for async writes to complete
+    struct timespec ts = {0, 200000000}; /* 200ms */
+    nanosleep(&ts, NULL);
+    
+    logger_deinit();
+    
+    // Check async file
+    struct stat st;
+    assert(stat(test_file, &st) == 0);
+    assert(st.st_size > 0);
+    
+    printf("✓ Multi-threaded asynchronous logging test passed\n");
+}
+
+void cleanup_test_files(void) {
     unlink("test_sync.log");
     unlink("test_async.log");
     unlink("test_levels.log");
     unlink("test_formatted.log");
+    unlink("test_multithreaded_sync.log");
+    unlink("test_multithreaded_async.log");
 }
 
-int main() {
+int main(void) {
     printf("Running minispdlog tests...\n\n");
     
     test_crossplatform_sync_logging();
@@ -154,6 +270,8 @@ int main() {
     test_crossplatform_log_levels();
     test_crossplatform_formatted_messages();
     test_crossplatform_min_level_change();
+    test_multithreaded_sync_logging();
+    test_multithreaded_async_logging();
     
     cleanup_test_files();
     

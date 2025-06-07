@@ -2,6 +2,12 @@
 
 - Initial release
 
-2.0.0 - 2025-06-15:
+2.0.0:
 
 - C99 version included, cross-platform support
+
+2.1.0 - 2025-06-07:
+
+- Fixed race conditions
+- Wainting async writer ends before ending
+- Refactored

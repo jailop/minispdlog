@@ -5,10 +5,11 @@
 #include <stdio.h>
 #include "minispdlog.h"
 
-int main() {
+int main(void) {
     printf("minispdlog Example\n");
     printf("==================\n");
 
+    // logger_init(NULL, LOG_DEBUG, 1);
     logger_init("example.log", LOG_DEBUG, 1);
 
     printf("\nLogging messages...\n");
@@ -33,6 +34,5 @@ int main() {
     // Clean up
     logger_deinit();
 
-    printf("✓ Logging completed. Check 'example.log' for output.\n");
     return 0;
 }
